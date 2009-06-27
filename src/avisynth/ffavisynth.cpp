@@ -150,7 +150,7 @@ static AVSValue __cdecl CreateFFVideoSource(AVSValue Args, void* UserData, IScri
 	try {
 		Filter = new AvisynthVideoSource(Source, Track, Index, FPSNum, FPSDen, PP, Threads, SeekMode, Env, ErrorMsg, MsgSize);
 	} catch (...) {
-		FFMS_DestroyIndex(Index);	
+		FFMS_DestroyIndex(Index);
 		throw;
 	}
 
