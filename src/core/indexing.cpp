@@ -119,8 +119,8 @@ TFrameInfo TFrameInfo::VideoFrameInfo(int64_t PTS, int RepeatPict, bool KeyFrame
 	return TFrameInfo(PTS, 0, 0, RepeatPict, KeyFrame, FilePos, FrameSize);
 }
 
-TFrameInfo TFrameInfo::AudioFrameInfo(int64_t PTS, int64_t SampleStart, unsigned int SampleCount, bool KeyFrame, int64_t FilePos, unsigned int FrameSize) {
-	return TFrameInfo(PTS, SampleStart, SampleCount, 0, KeyFrame, FilePos, FrameSize);
+TFrameInfo TFrameInfo::AudioFrameInfo(int64_t PTS, int64_t SampleStart, int64_t SampleCount, bool KeyFrame, int64_t FilePos, unsigned int FrameSize) {
+	return TFrameInfo(PTS, SampleStart, static_cast<unsigned int>(SampleCount), 0, KeyFrame, FilePos, FrameSize);
 }
 
 void FFMS_Track::WriteTimecodes(const char *TimecodeFile) {
@@ -146,7 +146,7 @@ int FFMS_Track::FrameFromPTS(int64_t PTS) {
 }
 
 int FFMS_Track::ClosestFrameFromPTS(int64_t PTS) {
-	int Frame = 0; 
+	int Frame = 0;
 	int64_t BestDiff = 0xFFFFFFFFFFFFFFLL; // big number
 	for (int i = 0; i < static_cast<int>(size()); i++) {
 		int64_t CurrentDiff = FFABS(at(i).PTS - PTS);
@@ -170,26 +170,16 @@ int FFMS_Track::FindClosestVideoKeyFrame(int Frame) {
 	return 0;
 }
 
-int FFMS_Track::FindClosestAudioKeyFrame(int64_t Sample) {
-	for (size_t i = 0; i < size(); i++) {
-		if (at(i).SampleStart == Sample && at(i).KeyFrame)
-			return i;
-		else if (at(i).SampleStart > Sample && at(i).KeyFrame)
-			return i  - 1;
-	}
-	return size() - 1;
-}
-
 FFMS_Track::FFMS_Track() {
 	this->TT = FFMS_TYPE_UNKNOWN;
-	this->TB.Num = 0; 
+	this->TB.Num = 0;
 	this->TB.Den = 0;
 	this->UseDTS = false;
 }
 
 FFMS_Track::FFMS_Track(int64_t Num, int64_t Den, FFMS_TrackType TT, bool UseDTS) {
 	this->TT = TT;
-	this->TB.Num = Num; 
+	this->TB.Num = Num;
 	this->TB.Den = Den;
 	this->UseDTS = UseDTS;
 }
@@ -208,7 +198,7 @@ void FFMS_Index::CalculateFileSignature(const char *Filename, int64_t *Filesize,
 	std::vector<uint8_t> ctxmem(av_sha1_size);
 	AVSHA1 *ctx = (AVSHA1 *)&ctxmem[0];
 	av_sha1_init(ctx);
-	
+
 	memset(&FileBuffer[0], 0, BlockSize);
 	fread(&FileBuffer[0], 1, BlockSize, SFile);
 	if (ferror(SFile) && !feof(SFile)) {
@@ -315,7 +305,7 @@ void FFMS_Index::WriteIndex(const char *IndexFile) {
 	if (deflateInit(&stream, 9) != Z_OK) {
 		throw FFMS_Exception(FFMS_ERROR_PARSER, FFMS_ERROR_FILE_READ, "Failed to initialize zlib");
 	}
-	
+
 	// Write the index file header
 	IndexHeader IH;
 	IH.Id = INDEXID;
@@ -335,7 +325,7 @@ void FFMS_Index::WriteIndex(const char *IndexFile) {
 	memcpy(IH.FileSignature, Digest, sizeof(Digest));
 
 	z_def(&IndexStream, &stream, &IH, sizeof(IndexHeader), 0);
-	
+
 	for (unsigned int i = 0; i < IH.Tracks; i++) {
 		FFMS_Track &ctrack = at(i);
 		TrackHeader TH;
@@ -378,7 +368,7 @@ static unsigned int z_inf(ffms_fstream *Index, z_stream *stream, void *in, size_
 		Index->read(((char*)in) + stream->avail_in, in_sz - stream->avail_in);
 		stream->next_in = (Bytef*) in;
 		stream->avail_in += Index->gcount();
-	
+
 		ret = inflate(stream, Z_SYNC_FLUSH);
 		switch (ret) {
 		case Z_NEED_DICT:
@@ -417,7 +407,7 @@ void FFMS_Index::ReadIndex(const char *IndexFile) {
 	if (inflateInit(&stream) != Z_OK) {
 		throw FFMS_Exception(FFMS_ERROR_PARSER, FFMS_ERROR_FILE_READ, "Failed to initialize zlib");
 	}
-	
+
 	// Read the index file header
 	IndexHeader IH;
 	z_inf(&Index, &stream,  &in, CHUNK, &IH, sizeof(IndexHeader));
@@ -448,7 +438,7 @@ void FFMS_Index::ReadIndex(const char *IndexFile) {
 	Decoder = IH.Decoder;
 	Filesize = IH.FileSize;
 	memcpy(Digest, IH.FileSignature, sizeof(Digest));
-	
+
 	try {
 		for (unsigned int i = 0; i < IH.Tracks; i++) {
 			TrackHeader TH;
@@ -502,7 +492,7 @@ void FFMS_Indexer::SetErrorHandling(int ErrorHandling) {
 }
 
 void FFMS_Indexer::SetProgressCallback(TIndexCallback IC, void *ICPrivate) {
-	this->IC = IC; 
+	this->IC = IC;
 	this->ICPrivate = ICPrivate;
 }
 
@@ -578,5 +568,62 @@ void FFMS_Indexer::WriteAudio(SharedAudioContext &AudioContext, FFMS_Index *Inde
 		}
 
 		AudioContext.W64Writer->WriteData(&DecodingBuffer[0], DBSize);
+	}
+}
+
+int64_t FFMS_Indexer::IndexAudioPacket(int Track, AVPacket *Packet, SharedAudioContext &Context, FFMS_Index &TrackIndices) {
+	AVCodecContext *CodecContext = Context.CodecContext;
+	int64_t StartSample = Context.CurrentSample;
+	int Read = 0;
+	while (Packet->size > 0) {
+		int dbsize = AVCODEC_MAX_AUDIO_FRAME_SIZE*10;
+		int Ret = avcodec_decode_audio3(CodecContext, &DecodingBuffer[0], &dbsize, Packet);
+		if (Ret < 0) {
+			if (ErrorHandling == FFMS_IEH_ABORT) {
+				throw FFMS_Exception(FFMS_ERROR_CODEC, FFMS_ERROR_DECODING, "Audio decoding error");
+			} else if (ErrorHandling == FFMS_IEH_CLEAR_TRACK) {
+				TrackIndices[Track].clear();
+				IndexMask &= ~(1 << Track);
+			} else if (ErrorHandling == FFMS_IEH_STOP_TRACK) {
+				IndexMask &= ~(1 << Track);
+			}
+			break;
+		}
+		Packet->size -= Ret;
+		Packet->data += Ret;
+		Read += Ret;
+
+		CheckAudioProperties(Track, CodecContext);
+
+		if (dbsize > 0)
+			Context.CurrentSample += (dbsize * 8) / (av_get_bits_per_sample_fmt(CodecContext->sample_fmt) * CodecContext->channels);
+
+		if (DumpMask & (1 << Track))
+			WriteAudio(Context, &TrackIndices, Track, dbsize);
+	}
+	Packet->size += Read;
+	Packet->data -= Read;
+	return Context.CurrentSample - StartSample;
+}
+
+void FFMS_Indexer::CheckAudioProperties(int Track, AVCodecContext *Context) {
+	std::map<int, FFMS_AudioProperties>::iterator it = LastAudioProperties.find(Track);
+	if (it == LastAudioProperties.end()) {
+		FFMS_AudioProperties &AP = LastAudioProperties[Track];
+		AP.SampleRate = Context->sample_rate;
+		AP.SampleFormat = Context->sample_fmt;
+		AP.Channels = Context->channels;
+	}
+	else if (it->second.SampleRate   != Context->sample_rate ||
+			 it->second.SampleFormat != Context->sample_fmt ||
+			 it->second.Channels     != Context->channels) {
+		std::ostringstream buf;
+		buf <<
+			"Audio format change detected. This is currently unsupported."
+			<< " Channels: " << it->second.Channels << " -> " << Context->channels << ";"
+			<< " Sample rate: " << it->second.SampleRate << " -> " << Context->sample_rate << ";"
+			<< " Sample format: " << GetLAVCSampleFormatName((AVSampleFormat)it->second.SampleFormat) << " -> "
+			<< GetLAVCSampleFormatName(Context->sample_fmt);
+		throw FFMS_Exception(FFMS_ERROR_UNSUPPORTED, FFMS_ERROR_DECODING, buf.str());
 	}
 }

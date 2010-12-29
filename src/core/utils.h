@@ -129,6 +129,7 @@ public:
 
 	~MatroskaReaderContext() {
 		free(Buffer);
+		if (ST.fp) fclose(ST.fp);
 	}
 };
 
@@ -147,12 +148,12 @@ public:
 		buf = (T*) av_malloc(sizeof(*buf) * n);
 		if (!buf) throw std::bad_alloc();
 	}
-	
+
 	~AlignedBuffer() {
 		av_free(buf);
 		buf = 0;
 	}
-	
+
 	const T &operator[] (size_t i) const { return buf[i]; }
 	T &operator[] (size_t i) { return buf[i]; }
 };

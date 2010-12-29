@@ -69,7 +69,7 @@ int FFMS_Exception::CopyOut(FFMS_ErrorInfo *ErrorInfo) const {
 	if (ErrorInfo) {
 		ErrorInfo->ErrorType = _ErrorType;
 		ErrorInfo->SubType = _SubType;
-		
+
 		if (ErrorInfo->BufferSize > 0) {
 			memset(ErrorInfo->Buffer, 0, ErrorInfo->BufferSize);
 			_Message.copy(ErrorInfo->Buffer, ErrorInfo->BufferSize - 1);
@@ -97,7 +97,7 @@ TrackCompressionContext::TrackCompressionContext(MatroskaFile *MF, TrackInfo *TI
 		CompressedPrivateData		= TI->CompMethodPrivate;
 		CompressedPrivateDataSize	= TI->CompMethodPrivateSize;
 	} else {
-		throw FFMS_Exception(FFMS_ERROR_PARSER, FFMS_ERROR_FILE_READ, 
+		throw FFMS_Exception(FFMS_ERROR_PARSER, FFMS_ERROR_FILE_READ,
 			"Can't create MKV track decompressor: unknown or unsupported compression method");
 	}
 }
@@ -279,9 +279,11 @@ void FillAP(FFMS_AudioProperties &AP, AVCodecContext *CTX, FFMS_Track &Frames) {
 	AP.Channels = CTX->channels;;
 	AP.ChannelLayout = CTX->channel_layout;
 	AP.SampleRate = CTX->sample_rate;
-	AP.NumSamples = (Frames.back()).SampleStart + (Frames.back()).SampleCount;
-	AP.FirstTime = ((Frames.front().PTS * Frames.TB.Num) / (double)Frames.TB.Den) / 1000;
-	AP.LastTime = ((Frames.back().PTS * Frames.TB.Num) / (double)Frames.TB.Den) / 1000;
+	if (Frames.size() > 0) {
+		AP.NumSamples = (Frames.back()).SampleStart + (Frames.back()).SampleCount;
+		AP.FirstTime = ((Frames.front().PTS * Frames.TB.Num) / (double)Frames.TB.Den) / 1000;
+		AP.LastTime = ((Frames.back().PTS * Frames.TB.Num) / (double)Frames.TB.Den) / 1000;
+	}
 }
 
 #ifdef HAALISOURCE
@@ -325,7 +327,7 @@ CodecID MatroskaToFFCodecID(char *Codec, void *CodecPrivate, unsigned int FourCC
 							case 16: CID = CODEC_ID_PCM_S16LE; break;
 							case 24: CID = CODEC_ID_PCM_S24LE; break;
 							case 32: CID = CODEC_ID_PCM_S32LE; break;
-						}	
+						}
 						break;
 					case CODEC_ID_PCM_S16BE:
 						switch (BitsPerSample) {
@@ -333,12 +335,12 @@ CodecID MatroskaToFFCodecID(char *Codec, void *CodecPrivate, unsigned int FourCC
 							case 16: CID = CODEC_ID_PCM_S16BE; break;
 							case 24: CID = CODEC_ID_PCM_S24BE; break;
 							case 32: CID = CODEC_ID_PCM_S32BE; break;
-						}	
+						}
 						break;
 					default:
 						break;
 				}
-				
+
 				return CID;
 			}
 	}
@@ -451,7 +453,7 @@ FILE *ffms_fopen(const char *filename, const char *mode) {
 		codepage = CP_UTF8;
 	else
 		codepage = CP_ACP;
-	
+
 	FILE *ret;
 	wchar_t *filename_wide	= dup_char_to_wchar(filename, codepage);
 	wchar_t *mode_wide		= dup_char_to_wchar(mode, codepage);
@@ -603,12 +605,10 @@ CComPtr<IMMContainer> HaaliOpenFile(const char *SourceFile, enum FFMS_Sources So
 #endif
 
 void LAVFOpenFile(const char *SourceFile, AVFormatContext *&FormatContext) {
-	if (av_open_input_file(&FormatContext, SourceFile, NULL, 0, NULL) != 0) {
-		std::ostringstream buf;
-		buf << "Couldn't open '" << SourceFile << "'";
-		throw FFMS_Exception(FFMS_ERROR_PARSER, FFMS_ERROR_FILE_READ, buf.str());
-	}
-	
+	if (av_open_input_file(&FormatContext, SourceFile, NULL, 0, NULL) != 0)
+		throw FFMS_Exception(FFMS_ERROR_PARSER, FFMS_ERROR_FILE_READ,
+			std::string("Couldn't open '") + SourceFile + "'");
+
 	if (av_find_stream_info(FormatContext) < 0) {
 		av_close_input_file(FormatContext);
 		FormatContext = NULL;
