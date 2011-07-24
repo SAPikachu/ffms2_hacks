@@ -59,7 +59,7 @@ FFHaaliVideo::FFHaaliVideo(const char *SourceFile, int Track,
 
 	AVCodec *Codec = NULL;
 	std::swap(Codec, CodecContext->codec);
-	if (avcodec_open(CodecContext, Codec) < 0)
+	if (avcodec_open2(CodecContext, Codec, NULL) < 0)
 		throw FFMS_Exception(FFMS_ERROR_DECODING, FFMS_ERROR_CODEC,
 			"Could not open video codec");
 
@@ -95,7 +95,7 @@ FFHaaliVideo::FFHaaliVideo(const char *SourceFile, int Track,
 	VP.ColorRange = CodecContext->color_range;
 	// these pixfmt's are deprecated but still used
 	if (
-		CodecContext->pix_fmt == PIX_FMT_YUVJ420P 
+		CodecContext->pix_fmt == PIX_FMT_YUVJ420P
 		|| CodecContext->pix_fmt == PIX_FMT_YUVJ422P
 		|| CodecContext->pix_fmt == PIX_FMT_YUVJ444P
 	)
@@ -112,7 +112,7 @@ FFHaaliVideo::FFHaaliVideo(const char *SourceFile, int Track,
 	if (Frames.size() >= 2) {
 		double PTSDiff = (double)(Frames.back().PTS - Frames.front().PTS);
 		VP.FPSDenominator = (unsigned int)(PTSDiff  / (double)1000 / (double)(VP.NumFrames - 1) + 0.5);
-		VP.FPSNumerator = 1000000; 
+		VP.FPSNumerator = 1000000;
 	}
 
 	// attempt to correct framerate to the proper NTSC fraction, if applicable
@@ -188,7 +188,7 @@ void FFHaaliVideo::DecodeNextFrame(int64_t *AFirstStartTime) {
 				DelayCounter++;
 			if (DelayCounter > CodecContext->has_b_frames && !InitialDecode)
 				goto Done;
-			
+
 			if (FrameFinished)
 				goto Done;
 		}

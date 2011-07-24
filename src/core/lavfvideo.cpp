@@ -57,7 +57,7 @@ FFLAVFVideo::FFLAVFVideo(const char *SourceFile, int Track, FFMS_Index *Index,
 		throw FFMS_Exception(FFMS_ERROR_DECODING, FFMS_ERROR_CODEC,
 			"Video codec not found");
 
-	if (avcodec_open(CodecContext, Codec) < 0)
+	if (avcodec_open2(CodecContext, Codec, NULL) < 0)
 		throw FFMS_Exception(FFMS_ERROR_DECODING, FFMS_ERROR_CODEC,
 			"Could not open video codec");
 
@@ -84,7 +84,7 @@ FFLAVFVideo::FFLAVFVideo(const char *SourceFile, int Track, FFMS_Index *Index,
 	VP.ColorRange = CodecContext->color_range;
 	// these pixfmt's are deprecated but still used
 	if (
-		CodecContext->pix_fmt == PIX_FMT_YUVJ420P 
+		CodecContext->pix_fmt == PIX_FMT_YUVJ420P
 		|| CodecContext->pix_fmt == PIX_FMT_YUVJ422P
 		|| CodecContext->pix_fmt == PIX_FMT_YUVJ444P
 	)
@@ -110,7 +110,7 @@ FFLAVFVideo::FFLAVFVideo(const char *SourceFile, int Track, FFMS_Index *Index,
 		double TD = (double)(Frames.TB.Den);
 		double TN = (double)(Frames.TB.Num);
 		VP.FPSDenominator = (unsigned int)(((double)1000000) / (double)((VP.NumFrames - 1) / ((PTSDiff * TN/TD) / (double)1000)));
-		VP.FPSNumerator = 1000000; 
+		VP.FPSNumerator = 1000000;
 	}
 
 	// attempt to correct framerate to the proper NTSC fraction, if applicable
@@ -251,7 +251,7 @@ ReSeek:
 					default:
 						throw FFMS_Exception(FFMS_ERROR_SEEKING, FFMS_ERROR_UNKNOWN,
 							"Failed assertion");
-				}	
+				}
 			}
 		}
 

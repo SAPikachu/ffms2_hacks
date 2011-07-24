@@ -27,7 +27,7 @@ extern "C" {
 
 FFLAVFIndexer::FFLAVFIndexer(const char *Filename, AVFormatContext *FormatContext) : FFMS_Indexer(Filename) {
 	this->FormatContext = FormatContext;
-	
+
 	if (av_find_stream_info(FormatContext) < 0) {
 		av_close_input_file(FormatContext);
 		throw FFMS_Exception(FFMS_ERROR_PARSER, FFMS_ERROR_FILE_READ,
@@ -57,7 +57,7 @@ FFMS_Index *FFLAVFIndexer::DoIndexing() {
 				throw FFMS_Exception(FFMS_ERROR_CODEC, FFMS_ERROR_UNSUPPORTED,
 					"Video codec not found");
 
-			if (avcodec_open(FormatContext->streams[i]->codec, VideoCodec) < 0)
+			if (avcodec_open2(FormatContext->streams[i]->codec, VideoCodec, NULL) < 0)
 				throw FFMS_Exception(FFMS_ERROR_CODEC, FFMS_ERROR_DECODING,
 					"Could not open video codec");
 
@@ -75,7 +75,7 @@ FFMS_Index *FFLAVFIndexer::DoIndexing() {
 				throw FFMS_Exception(FFMS_ERROR_CODEC, FFMS_ERROR_UNSUPPORTED,
 					"Audio codec not found");
 
-			if (avcodec_open(AudioCodecContext, AudioCodec) < 0)
+			if (avcodec_open2(AudioCodecContext, AudioCodec, NULL) < 0)
 				throw FFMS_Exception(FFMS_ERROR_CODEC, FFMS_ERROR_DECODING,
 					"Could not open audio codec");
 
@@ -94,7 +94,7 @@ FFMS_Index *FFLAVFIndexer::DoIndexing() {
 		// Update progress
 		// FormatContext->pb can apparently be NULL when opening images.
 		if (IC && FormatContext->pb) {
-			if ((*IC)(FormatContext->pb->pos, FormatContext->file_size, ICPrivate))	
+			if ((*IC)(FormatContext->pb->pos, FormatContext->file_size, ICPrivate))
 				throw FFMS_Exception(FFMS_ERROR_CANCELLED, FFMS_ERROR_USER,
 					"Cancelled by user");
 		}

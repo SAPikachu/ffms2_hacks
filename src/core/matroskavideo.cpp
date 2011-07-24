@@ -66,7 +66,7 @@ FFMatroskaVideo::FFMatroskaVideo(const char *SourceFile, int Track,
 	if (TI->CompEnabled)
 		TCC = new TrackCompressionContext(MF, TI, VideoTrack);
 
-	CodecContext = avcodec_alloc_context();
+	CodecContext = avcodec_alloc_context3(NULL);
 #if LIBAVCODEC_VERSION_MAJOR >= 53 || (LIBAVCODEC_VERSION_MAJOR == 52 && LIBAVCODEC_VERSION_MINOR >= 112)
 	CodecContext->thread_count = DecodingThreads;
 #else
@@ -81,7 +81,7 @@ FFMatroskaVideo::FFMatroskaVideo(const char *SourceFile, int Track,
 
 	InitializeCodecContextFromMatroskaTrackInfo(TI, CodecContext);
 
-	if (avcodec_open(CodecContext, Codec) < 0)
+	if (avcodec_open2(CodecContext, Codec, NULL) < 0)
 		throw FFMS_Exception(FFMS_ERROR_DECODING, FFMS_ERROR_CODEC,
 			"Could not open video codec");
 
@@ -106,7 +106,7 @@ FFMatroskaVideo::FFMatroskaVideo(const char *SourceFile, int Track,
 	VP.ColorRange = CodecContext->color_range;
 	// these pixfmt's are deprecated but still used
 	if (
-		CodecContext->pix_fmt == PIX_FMT_YUVJ420P 
+		CodecContext->pix_fmt == PIX_FMT_YUVJ420P
 		|| CodecContext->pix_fmt == PIX_FMT_YUVJ422P
 		|| CodecContext->pix_fmt == PIX_FMT_YUVJ444P
 	)
@@ -123,7 +123,7 @@ FFMatroskaVideo::FFMatroskaVideo(const char *SourceFile, int Track,
 	if (Frames.size() >= 2) {
 		double PTSDiff = (double)(Frames.back().PTS - Frames.front().PTS);
 		VP.FPSDenominator = (unsigned int)(PTSDiff * mkv_TruncFloat(TI->TimecodeScale) / (double)1000 / (double)(VP.NumFrames - 1) + 0.5);
-		VP.FPSNumerator = 1000000; 
+		VP.FPSNumerator = 1000000;
 	}
 
 	// attempt to correct framerate to the proper NTSC fraction, if applicable
@@ -160,7 +160,7 @@ void FFMatroskaVideo::DecodeNextFrame() {
 			InitialDecode = 0;
 		}
 	}
-	
+
 	while (PacketNumber < Frames.size()) {
 		// The additional indirection is because the packets are stored in
 		// presentation order and not decoding order, this is unnoticable

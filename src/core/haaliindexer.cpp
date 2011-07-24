@@ -80,7 +80,7 @@ FFMS_Index *FFHaaliIndexer::DoIndexing() {
 
 		AVCodec *Codec = NULL;
 		std::swap(Codec, CodecContext->codec);
-		if (avcodec_open(CodecContext, Codec) < 0)
+		if (avcodec_open2(CodecContext, Codec, NULL) < 0)
 			throw FFMS_Exception(FFMS_ERROR_CODEC, FFMS_ERROR_DECODING,
 				"Could not open codec");
 
@@ -168,7 +168,7 @@ FFMS_Index *FFHaaliIndexer::DoIndexing() {
 	return TrackIndices.release();
 }
 
-int FFHaaliIndexer::GetNumberOfTracks() { 
+int FFHaaliIndexer::GetNumberOfTracks() {
 	return NumTracks;
 }
 
