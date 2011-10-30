@@ -105,6 +105,7 @@ static AVSValue __cdecl CreateFFVideoSource(AVSValue Args, void* UserData, IScri
 	const char *Resizer = Args[12].AsString("BICUBIC");
 	const char *ColorSpace = Args[13].AsString("");
 	const char *VarPrefix = Args[15].AsString("");
+    bool Enable10bitHack = Args[16].AsBool(false);
 
 	if (FPSDen < 1)
 		Env->ThrowError("FFVideoSource: FPS denominator needs to be 1 or higher");
@@ -173,7 +174,7 @@ static AVSValue __cdecl CreateFFVideoSource(AVSValue Args, void* UserData, IScri
 	AvisynthVideoSource *Filter;
 
 	try {
-		Filter = new AvisynthVideoSource(Source, Track, Index, FPSNum, FPSDen, Threads, SeekMode, RFFMode, Width, Height, Resizer, ColorSpace, VarPrefix, Env);
+		Filter = new AvisynthVideoSource(Source, Track, Index, FPSNum, FPSDen, Threads, SeekMode, RFFMode, Width, Height, Resizer, ColorSpace, VarPrefix, Enable10bitHack, Env);
 	} catch (...) {
 		FFMS_DestroyIndex(Index);
 		throw;
@@ -296,7 +297,7 @@ static AVSValue __cdecl FFGetVersion(AVSValue Args, void* UserData, IScriptEnvir
 
 extern "C" __declspec(dllexport) const char* __stdcall AvisynthPluginInit2(IScriptEnvironment* Env) {
 	Env->AddFunction("FFIndex", "[source]s[cachefile]s[indexmask]i[dumpmask]i[audiofile]s[errorhandling]i[overwrite]b[utf8]b[demuxer]s", CreateFFIndex, 0);
-	Env->AddFunction("FFVideoSource", "[source]s[track]i[cache]b[cachefile]s[fpsnum]i[fpsden]i[threads]i[timecodes]s[seekmode]i[rffmode]i[width]i[height]i[resizer]s[colorspace]s[utf8]b[varprefix]s", CreateFFVideoSource, 0);
+	Env->AddFunction("FFVideoSource", "[source]s[track]i[cache]b[cachefile]s[fpsnum]i[fpsden]i[threads]i[timecodes]s[seekmode]i[rffmode]i[width]i[height]i[resizer]s[colorspace]s[utf8]b[varprefix]s[enable10bithack]b", CreateFFVideoSource, 0);
 	Env->AddFunction("FFAudioSource", "[source]s[track]i[cache]b[cachefile]s[adjustdelay]i[utf8]b[varprefix]s", CreateFFAudioSource, 0);
 	Env->AddFunction("SWScale", "c[width]i[height]i[resizer]s[colorspace]s", CreateSWScale, 0);
 	Env->AddFunction("FFGetLogLevel", "", FFGetLogLevel, 0);

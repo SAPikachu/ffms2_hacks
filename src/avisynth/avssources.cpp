@@ -27,7 +27,7 @@
 AvisynthVideoSource::AvisynthVideoSource(const char *SourceFile, int Track, FFMS_Index *Index,
 		int FPSNum, int FPSDen, int Threads, int SeekMode, int RFFMode,
 		int ResizeToWidth, int ResizeToHeight, const char *ResizerName,
-		const char *ConvertToFormatName, const char *VarPrefix, IScriptEnvironment* Env)
+		const char *ConvertToFormatName, const char *VarPrefix, bool Enable10bitHack, IScriptEnvironment* Env) {
 : FPSNum(FPSNum)
 , FPSDen(FPSDen)
 , RFFMode(RFFMode)
@@ -43,7 +43,7 @@ AvisynthVideoSource::AvisynthVideoSource(const char *SourceFile, int Track, FFMS
 		Env->ThrowError("FFVideoSource: %s", E.Buffer);
 
 	try {
-		InitOutputFormat(ResizeToWidth, ResizeToHeight, ResizerName, ConvertToFormatName, Env);
+		InitOutputFormat(ResizeToWidth, ResizeToHeight, ResizerName, ConvertToFormatName, Enable10bitHack, Env);
 	} catch (AvisynthError &) {
 		FFMS_DestroyVideoSource(V);
 		throw;
@@ -173,7 +173,7 @@ AvisynthVideoSource::~AvisynthVideoSource() {
 
 void AvisynthVideoSource::InitOutputFormat(
 	int ResizeToWidth, int ResizeToHeight, const char *ResizerName,
-	const char *ConvertToFormatName, IScriptEnvironment *Env) {
+	const char *ConvertToFormatName, bool Enable10bitHack, IScriptEnvironment *Env) {
 
 	ErrorInfo E;
 	const FFMS_VideoProperties *VP = FFMS_GetVideoProperties(V);
@@ -183,7 +183,11 @@ void AvisynthVideoSource::InitOutputFormat(
 
 	int TargetFormats[5];
 	TargetFormats[0] = FFMS_GetPixFmt("yuv420p");
-	TargetFormats[1] = FFMS_GetPixFmt("yuv420p10le");
+    if (Enable10bitHack) {
+	    TargetFormats[1] = FFMS_GetPixFmt("yuv420p10le");
+    } else {
+	    TargetFormats[1] = FFMS_GetPixFmt("yuv420p");
+    }
 	TargetFormats[2] = FFMS_GetPixFmt("yuyv422");
 	TargetFormats[3] = FFMS_GetPixFmt("bgra");
 	TargetFormats[4] = -1;

@@ -50,14 +50,14 @@ class AvisynthVideoSource : public IClip {
 	bool UsingHighBitdepthHack;
 
 	void InitOutputFormat(int ResizeToWidth, int ResizeToHeight,
-		const char *ResizerName, const char *ConvertToFormatName, IScriptEnvironment *Env);
+		const char *ResizerName, const char *ConvertToFormatName, bool Enable10bitHack, IScriptEnvironment *Env);
 	void OutputFrame(const FFMS_Frame *Frame, PVideoFrame &Dst, IScriptEnvironment *Env);
 	void OutputField(const FFMS_Frame *Frame, PVideoFrame &Dst, int Field, IScriptEnvironment *Env);
 public:
 	AvisynthVideoSource(const char *SourceFile, int Track, FFMS_Index *Index,
 		int FPSNum, int FPSDen, int Threads, int SeekMode, int RFFMode,
 		int ResizeToWidth, int ResizeToHeight, const char *ResizerName,
-		const char *ConvertToFormatName, const char *VarPrefix, IScriptEnvironment* Env);
+		const char *ConvertToFormatName, const char *VarPrefix, bool Enable10bitHack, IScriptEnvironment* Env);
 	~AvisynthVideoSource();
 	bool __stdcall GetParity(int n);
 	void __stdcall SetCacheHints(int cachehints, int frame_range) { }
