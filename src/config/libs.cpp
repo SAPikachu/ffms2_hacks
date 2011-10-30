@@ -32,8 +32,9 @@ extern "C" {
 // standard mingw/ffmpeg libraries
 #pragma comment(lib, "libgcc.a")
 #pragma comment(lib, "libmoldname.a")
-#pragma comment(lib, "libmingwex.a")
+#pragma comment(lib, "libmingwex2.lib")
 #pragma comment(lib, "libz.a")
+#pragma comment(lib, "libbz2.a")
 #pragma comment(lib, "libavutil.a")
 #pragma comment(lib, "libavcodec.a")
 #pragma comment(lib, "libavformat.a")

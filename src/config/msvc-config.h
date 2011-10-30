@@ -44,4 +44,4 @@ If you want to force compilation WITHOUT a given library, uncomment the correspo
 
 // pthreads (libpthreadGC2.a)
 //#define	WITH_PTHREAD_GC2
-//#undef	WITH_PTHREAD_GC2
+#undef	WITH_PTHREAD_GC2
