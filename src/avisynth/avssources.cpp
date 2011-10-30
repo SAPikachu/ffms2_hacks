@@ -34,6 +34,7 @@ AvisynthVideoSource::AvisynthVideoSource(const char *SourceFile, int Track, FFMS
 	this->FPSDen = FPSDen;
 	this->RFFMode = RFFMode;
 	this->VarPrefix = VarPrefix;
+	this->UsingHighBitdepthHack = false;
 
 	char ErrorMsg[1024];
 	FFMS_ErrorInfo E;
@@ -241,6 +242,10 @@ void AvisynthVideoSource::InitOutputFormat(
 		VI.pixel_type = VideoInfo::CS_BGR32;
 	else if (F->ConvertedPixelFormat == FFMS_GetPixFmt("bgr24"))
 		VI.pixel_type = VideoInfo::CS_BGR24;
+	else if (F->ConvertedPixelFormat == FFMS_GetPixFmt("yuv420p10le")) {
+		VI.pixel_type = VideoInfo::CS_I420;
+		this->UsingHighBitdepthHack = true;
+	}
 	else
 		Env->ThrowError("FFVideoSource: No suitable output format found");
 
@@ -261,6 +266,8 @@ void AvisynthVideoSource::InitOutputFormat(
 
 	VI.width = F->ScaledWidth;
 	VI.height = F->ScaledHeight;
+	if (this->UsingHighBitdepthHack)
+		VI.height *= 2;
 
 	// Crop to obey avisynth's even width/height requirements
 	if (VI.pixel_type == VideoInfo::CS_I420) {
@@ -278,7 +285,36 @@ void AvisynthVideoSource::InitOutputFormat(
 }
 
 void AvisynthVideoSource::OutputFrame(const FFMS_Frame *Frame, PVideoFrame &Dst, IScriptEnvironment *Env) {
-	if (VI.pixel_type == VideoInfo::CS_I420) {
+	if (VI.pixel_type == VideoInfo::CS_I420 && this->UsingHighBitdepthHack) {
+		// ugly code for an ugly hack!
+		for (int p = 0; p < 3; p++) {
+			int plane;
+			switch (p) {
+				case 0: plane = PLANAR_Y; break;
+				case 1: plane = PLANAR_U; break;
+				case 2: plane = PLANAR_V; break;
+			}
+			uint8_t *DstP = Dst->GetWritePtr(plane);
+			int DstPitch = Dst->GetPitch(plane);
+			// we need to iterate over the source buffer twice; once to get the MSB and once to get the LSB.
+			for (int i = 1; i >= 0; i--) {
+				uint16_t *SrcP = (uint16_t*)Frame->Data[p];
+				int height = (p == 0) ? Frame->ScaledHeight : Frame->ScaledHeight / 2; // remember UV planes are half height
+				for (int y = 0; y < height; y++) {
+					for (int x = 0; x < (Frame->Linesize[p] / 2); x++) { // assume 2 bytes per pixel
+						// wouldn't it have been nice if we could just use Env->BitBlt()...?
+						if (x >= DstPitch) {
+							*SrcP++; // advance the source pointer until we hit the next line
+							continue;
+						}
+						// I sure hope a shift by 0 gets optimized away by the compiler...
+						*DstP++ = (uint8_t)(*SrcP++ >> (2*i)); // yuv420p10le uses the 10 least significant bits. shift right by 2 to get the 8 most significant ones.
+					}
+				}
+			}
+		}
+	}
+	else if (VI.pixel_type == VideoInfo::CS_I420) {
 		Env->BitBlt(Dst->GetWritePtr(PLANAR_Y), Dst->GetPitch(PLANAR_Y), Frame->Data[0], Frame->Linesize[0], Dst->GetRowSize(PLANAR_Y), Dst->GetHeight(PLANAR_Y)); 
 		Env->BitBlt(Dst->GetWritePtr(PLANAR_U), Dst->GetPitch(PLANAR_U), Frame->Data[1], Frame->Linesize[1], Dst->GetRowSize(PLANAR_U), Dst->GetHeight(PLANAR_U)); 
 		Env->BitBlt(Dst->GetWritePtr(PLANAR_V), Dst->GetPitch(PLANAR_V), Frame->Data[2], Frame->Linesize[2], Dst->GetRowSize(PLANAR_V), Dst->GetHeight(PLANAR_V)); 

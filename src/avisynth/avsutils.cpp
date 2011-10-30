@@ -50,6 +50,8 @@ PixelFormat CSNameToPIXFMT(const char *CSName, PixelFormat Default) {
 		return PIX_FMT_BGR24;
 	if (!_stricmp(CSName, "RGB32"))
 		return PIX_FMT_RGB32;
+	if (!_stricmp(CSName, "YV12_10-bit_hack"))
+		return PIX_FMT_YUV420P10LE;
 	return PIX_FMT_NONE;
 }
 

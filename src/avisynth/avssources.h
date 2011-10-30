@@ -42,6 +42,7 @@ private:
 	int RFFMode;
 	std::vector<FrameFields> FieldList;
 	const char *VarPrefix;
+	bool UsingHighBitdepthHack;
 
 	void InitOutputFormat(int ResizeToWidth, int ResizeToHeight,
 		const char *ResizerName, const char *ConvertToFormatName, IScriptEnvironment *Env);
