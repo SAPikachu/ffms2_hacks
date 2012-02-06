@@ -183,11 +183,11 @@ void AvisynthVideoSource::InitOutputFormat(
 
 	int TargetFormats[5];
 	TargetFormats[0] = FFMS_GetPixFmt("yuv420p");
-    if (Enable10bitHack) {
-	    TargetFormats[1] = FFMS_GetPixFmt("yuv420p10le");
-    } else {
-	    TargetFormats[1] = FFMS_GetPixFmt("yuv420p");
-    }
+	if (Enable10bitHack) {
+		TargetFormats[1] = FFMS_GetPixFmt("yuv420p10le");
+	} else {
+		TargetFormats[1] = FFMS_GetPixFmt("yuv420p");
+	}
 	TargetFormats[2] = FFMS_GetPixFmt("yuyv422");
 	TargetFormats[3] = FFMS_GetPixFmt("bgra");
 	TargetFormats[4] = -1;
@@ -285,6 +285,7 @@ static void BlitPlane(const FFMS_Frame *Frame, PVideoFrame &Dst, IScriptEnvironm
 }
 
 static void BlitPlaneHigh(const FFMS_Frame *Frame, PVideoFrame &Dst, IScriptEnvironment *Env, int p) {
+	// Credits: TheFluff & cretindesalpes
 	int plane;
 	switch (p) {
 		case 0: plane = PLANAR_Y; break;
@@ -294,19 +295,20 @@ static void BlitPlaneHigh(const FFMS_Frame *Frame, PVideoFrame &Dst, IScriptEnvi
 	uint8_t *DstP = Dst->GetWritePtr(plane);
 	int DstPitch = Dst->GetPitch(plane);
 	// we need to iterate over the source buffer twice; once to get the MSB and once to get the LSB.
-	for (int i = 1; i >= 0; i--) {
-		uint16_t *SrcP = (uint16_t*)Frame->Data[p];
-		int height = (p == 0) ? Frame->ScaledHeight : Frame->ScaledHeight / 2; // remember UV planes are half height
-		for (int y = 0; y < height; y++) {
-			for (int x = 0; x < (Frame->Linesize[p] / 2); x++) { // assume 2 bytes per pixel
-				// wouldn't it have been nice if we could just use Env->BitBlt()...?
-				if (x >= DstPitch) {
-					*SrcP++; // advance the source pointer until we hit the next line
-					continue;
-				}
-				// I sure hope a shift by 0 gets optimized away by the compiler...
-				*DstP++ = (uint8_t)(*SrcP++ >> (2*i)); // yuv420p10le uses the 10 least significant bits. shift right by 2 to get the 8 most significant ones.
+	uint16_t *SrcP = (uint16_t*)Frame->Data[p];
+	int height = (p == 0) ? Frame->ScaledHeight : Frame->ScaledHeight / 2; // remember UV planes are half height
+	const int lsb_offset = height * DstPitch;
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < (Frame->Linesize[p] / 2); x++) { // assume 2 bytes per pixel
+			// wouldn't it have been nice if we could just use Env->BitBlt()...?
+			if (x >= DstPitch) {
+				*SrcP++; // advance the source pointer until we hit the next line
+				continue;
 			}
+			const int data10  = *SrcP++;
+			*DstP			 = (uint8_t)(data10 >> 2);
+			DstP[lsb_offset]  = (uint8_t)(data10 << 6);
+			DstP++;
 		}
 	}
 }
