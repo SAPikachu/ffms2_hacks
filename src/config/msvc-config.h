@@ -32,7 +32,7 @@ If you want to force compilation WITHOUT a given library, uncomment the correspo
 
 // libpostproc (libpostproc.a)
 //#define	WITH_LIBPOSTPROC
-//#undef	WITH_LIBPOSTPROC
+#undef	WITH_LIBPOSTPROC
 
 // OpenCore AMR narrowband (libopencore-amrnb.a)
 //#define	WITH_OPENCORE_AMR_NB
