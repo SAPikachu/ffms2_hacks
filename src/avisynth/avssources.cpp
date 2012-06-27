@@ -302,9 +302,8 @@ void AvisynthVideoSource::OutputFrame(const FFMS_Frame *Frame, PVideoFrame &Dst,
 			}
 			uint8_t *DstP = Dst->GetWritePtr(plane);
 			int DstPitch = Dst->GetPitch(plane);
-			// we need to iterate over the source buffer twice; once to get the MSB and once to get the LSB.
 			uint16_t *SrcP = (uint16_t*)Frame->Data[p];
-			int height = (p == 0) ? Frame->ScaledHeight : Frame->ScaledHeight / 2; // remember UV planes are half height
+			int height = Frame->ScaledHeight >> VI.GetPlaneHeightSubsampling(plane);
 			const int lsb_offset = height * DstPitch;
 			for (int y = 0; y < height; y++) {
 				for (int x = 0; x < (Frame->Linesize[p] / 2); x++) { // assume 2 bytes per pixel
