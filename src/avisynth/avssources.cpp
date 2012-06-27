@@ -322,13 +322,13 @@ void AvisynthVideoSource::OutputFrame(const FFMS_Frame *Frame, PVideoFrame &Dst,
 		}
 	}
 	else if (VI.pixel_type == VideoInfo::CS_I420) {
-		Env->BitBlt(Dst->GetWritePtr(PLANAR_Y), Dst->GetPitch(PLANAR_Y), Frame->Data[0], Frame->Linesize[0], Dst->GetRowSize(PLANAR_Y), Dst->GetHeight(PLANAR_Y)); 
-		Env->BitBlt(Dst->GetWritePtr(PLANAR_U), Dst->GetPitch(PLANAR_U), Frame->Data[1], Frame->Linesize[1], Dst->GetRowSize(PLANAR_U), Dst->GetHeight(PLANAR_U)); 
-		Env->BitBlt(Dst->GetWritePtr(PLANAR_V), Dst->GetPitch(PLANAR_V), Frame->Data[2], Frame->Linesize[2], Dst->GetRowSize(PLANAR_V), Dst->GetHeight(PLANAR_V)); 
+		Env->BitBlt(Dst->GetWritePtr(PLANAR_Y), Dst->GetPitch(PLANAR_Y), Frame->Data[0], Frame->Linesize[0], VI.RowSize(PLANAR_Y), VI.height >> VI.GetPlaneHeightSubsampling(PLANAR_Y)); 
+		Env->BitBlt(Dst->GetWritePtr(PLANAR_U), Dst->GetPitch(PLANAR_U), Frame->Data[1], Frame->Linesize[1], VI.RowSize(PLANAR_U), VI.height >> VI.GetPlaneHeightSubsampling(PLANAR_U)); 
+		Env->BitBlt(Dst->GetWritePtr(PLANAR_V), Dst->GetPitch(PLANAR_V), Frame->Data[2], Frame->Linesize[2], VI.RowSize(PLANAR_V), VI.height >> VI.GetPlaneHeightSubsampling(PLANAR_V)); 
 	} else if (VI.IsYUY2()) {
-		Env->BitBlt(Dst->GetWritePtr(), Dst->GetPitch(), Frame->Data[0], Frame->Linesize[0], Dst->GetRowSize(), Dst->GetHeight()); 
+		Env->BitBlt(Dst->GetWritePtr(), Dst->GetPitch(), Frame->Data[0], Frame->Linesize[0], VI.RowSize(), VI.height); 
 	} else { // RGB
-		Env->BitBlt(Dst->GetWritePtr() + Dst->GetPitch() * (Dst->GetHeight() - 1), -Dst->GetPitch(), Frame->Data[0], Frame->Linesize[0], Dst->GetRowSize(), Dst->GetHeight()); 
+		Env->BitBlt(Dst->GetWritePtr() + Dst->GetPitch() * (VI.height - 1), -Dst->GetPitch(), Frame->Data[0], Frame->Linesize[0], VI.RowSize(), VI.height); 
 	}
 }
 
@@ -337,24 +337,24 @@ void AvisynthVideoSource::OutputField(const FFMS_Frame *Frame, PVideoFrame &Dst,
 	
 	if (VI.pixel_type == VideoInfo::CS_I420) {
 		if (Field) {
-			Env->BitBlt(Dst->GetWritePtr(PLANAR_Y), Dst->GetPitch(PLANAR_Y) * 2, SrcPicture->Data[0], SrcPicture->Linesize[0] * 2, Dst->GetRowSize(PLANAR_Y), Dst->GetHeight(PLANAR_Y) / 2); 
-			Env->BitBlt(Dst->GetWritePtr(PLANAR_U), Dst->GetPitch(PLANAR_U) * 2, SrcPicture->Data[1], SrcPicture->Linesize[1] * 2, Dst->GetRowSize(PLANAR_U), Dst->GetHeight(PLANAR_U) / 2); 
-			Env->BitBlt(Dst->GetWritePtr(PLANAR_V), Dst->GetPitch(PLANAR_V) * 2, SrcPicture->Data[2], SrcPicture->Linesize[2] * 2, Dst->GetRowSize(PLANAR_V), Dst->GetHeight(PLANAR_V) / 2); 
+			Env->BitBlt(Dst->GetWritePtr(PLANAR_Y), Dst->GetPitch(PLANAR_Y) * 2, SrcPicture->Data[0], SrcPicture->Linesize[0] * 2, VI.RowSize(PLANAR_Y), VI.height >> VI.GetPlaneHeightSubsampling(PLANAR_Y) / 2); 
+			Env->BitBlt(Dst->GetWritePtr(PLANAR_U), Dst->GetPitch(PLANAR_U) * 2, SrcPicture->Data[1], SrcPicture->Linesize[1] * 2, VI.RowSize(PLANAR_U), VI.height >> VI.GetPlaneHeightSubsampling(PLANAR_U) / 2); 
+			Env->BitBlt(Dst->GetWritePtr(PLANAR_V), Dst->GetPitch(PLANAR_V) * 2, SrcPicture->Data[2], SrcPicture->Linesize[2] * 2, VI.RowSize(PLANAR_V), VI.height >> VI.GetPlaneHeightSubsampling(PLANAR_V) / 2); 
 		} else {
-			Env->BitBlt(Dst->GetWritePtr(PLANAR_Y) + Dst->GetPitch(PLANAR_Y), Dst->GetPitch(PLANAR_Y) * 2, SrcPicture->Data[0] + SrcPicture->Linesize[0], SrcPicture->Linesize[0] * 2, Dst->GetRowSize(PLANAR_Y), Dst->GetHeight(PLANAR_Y) / 2); 
-			Env->BitBlt(Dst->GetWritePtr(PLANAR_U) + Dst->GetPitch(PLANAR_U), Dst->GetPitch(PLANAR_U) * 2, SrcPicture->Data[1] + SrcPicture->Linesize[1], SrcPicture->Linesize[1] * 2, Dst->GetRowSize(PLANAR_U), Dst->GetHeight(PLANAR_U) / 2); 
-			Env->BitBlt(Dst->GetWritePtr(PLANAR_V) + Dst->GetPitch(PLANAR_V), Dst->GetPitch(PLANAR_V) * 2, SrcPicture->Data[2] + SrcPicture->Linesize[2], SrcPicture->Linesize[2] * 2, Dst->GetRowSize(PLANAR_V), Dst->GetHeight(PLANAR_V) / 2); 
+			Env->BitBlt(Dst->GetWritePtr(PLANAR_Y) + Dst->GetPitch(PLANAR_Y), Dst->GetPitch(PLANAR_Y) * 2, SrcPicture->Data[0] + SrcPicture->Linesize[0], SrcPicture->Linesize[0] * 2, VI.RowSize(PLANAR_Y), VI.height >> VI.GetPlaneHeightSubsampling(PLANAR_Y) / 2); 
+			Env->BitBlt(Dst->GetWritePtr(PLANAR_U) + Dst->GetPitch(PLANAR_U), Dst->GetPitch(PLANAR_U) * 2, SrcPicture->Data[1] + SrcPicture->Linesize[1], SrcPicture->Linesize[1] * 2, VI.RowSize(PLANAR_U), VI.height >> VI.GetPlaneHeightSubsampling(PLANAR_U) / 2); 
+			Env->BitBlt(Dst->GetWritePtr(PLANAR_V) + Dst->GetPitch(PLANAR_V), Dst->GetPitch(PLANAR_V) * 2, SrcPicture->Data[2] + SrcPicture->Linesize[2], SrcPicture->Linesize[2] * 2, VI.RowSize(PLANAR_V), VI.height >> VI.GetPlaneHeightSubsampling(PLANAR_V) / 2); 
 		}
 	} else if (VI.IsYUY2()) {
 		if (Field)
-			Env->BitBlt(Dst->GetWritePtr(), Dst->GetPitch() * 2, SrcPicture->Data[0], SrcPicture->Linesize[0] * 2, Dst->GetRowSize(), Dst->GetHeight() / 2); 
+			Env->BitBlt(Dst->GetWritePtr(), Dst->GetPitch() * 2, SrcPicture->Data[0], SrcPicture->Linesize[0] * 2, VI.RowSize(), VI.height / 2); 
 		else
-			Env->BitBlt(Dst->GetWritePtr() + Dst->GetPitch(), Dst->GetPitch() * 2, SrcPicture->Data[0] + SrcPicture->Linesize[0], SrcPicture->Linesize[0] * 2, Dst->GetRowSize(), Dst->GetHeight() / 2); 
+			Env->BitBlt(Dst->GetWritePtr() + Dst->GetPitch(), Dst->GetPitch() * 2, SrcPicture->Data[0] + SrcPicture->Linesize[0], SrcPicture->Linesize[0] * 2, VI.RowSize(), VI.height / 2); 
 	} else { // RGB
 		if (Field)
-			Env->BitBlt(Dst->GetWritePtr() + Dst->GetPitch() * (Dst->GetHeight() - 1), -Dst->GetPitch() * 2, SrcPicture->Data[0], SrcPicture->Linesize[0] * 2, Dst->GetRowSize(), Dst->GetHeight() / 2); 
+			Env->BitBlt(Dst->GetWritePtr() + Dst->GetPitch() * (VI.height - 1), -Dst->GetPitch() * 2, SrcPicture->Data[0], SrcPicture->Linesize[0] * 2, VI.RowSize(), VI.height / 2); 
 		else
-			Env->BitBlt(Dst->GetWritePtr() + Dst->GetPitch() * (Dst->GetHeight() - 2), -Dst->GetPitch() * 2, SrcPicture->Data[0] + SrcPicture->Linesize[0], SrcPicture->Linesize[0] * 2, Dst->GetRowSize(), Dst->GetHeight() / 2); 
+			Env->BitBlt(Dst->GetWritePtr() + Dst->GetPitch() * (VI.height - 2), -Dst->GetPitch() * 2, SrcPicture->Data[0] + SrcPicture->Linesize[0], SrcPicture->Linesize[0] * 2, VI.RowSize(), VI.height / 2); 
 	}
 }
 
