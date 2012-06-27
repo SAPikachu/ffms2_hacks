@@ -193,16 +193,20 @@ void AvisynthVideoSource::InitOutputFormat(
 	if (!F)
 		Env->ThrowError("FFVideoSource: %s", E.Buffer);
 
-	int TargetFormats[5];
+	int TargetFormats[7];
 	TargetFormats[0] = FFMS_GetPixFmt("yuv420p");
 	if (Enable10bitHack) {
 		TargetFormats[1] = FFMS_GetPixFmt("yuv420p10le");
+		TargetFormats[2] = FFMS_GetPixFmt("yuv422p10le");
+		TargetFormats[3] = FFMS_GetPixFmt("yuv444p10le");
 	} else {
 		TargetFormats[1] = FFMS_GetPixFmt("yuv420p");
+		TargetFormats[2] = FFMS_GetPixFmt("yuv420p");
+		TargetFormats[3] = FFMS_GetPixFmt("yuv420p");
 	}
-	TargetFormats[2] = FFMS_GetPixFmt("yuyv422");
-	TargetFormats[3] = FFMS_GetPixFmt("bgra");
-	TargetFormats[4] = -1;
+	TargetFormats[4] = FFMS_GetPixFmt("yuyv422");
+	TargetFormats[5] = FFMS_GetPixFmt("bgra");
+	TargetFormats[6] = -1;
 
 	// PIX_FMT_NV21 is misused as a return value different to the defined ones in the function
 	PixelFormat TargetPixelFormat = CSNameToPIXFMT(ConvertToFormatName, PIX_FMT_NV21);
@@ -250,6 +254,14 @@ void AvisynthVideoSource::InitOutputFormat(
 	else if (F->ConvertedPixelFormat == FFMS_GetPixFmt("yuv420p10le")) {
 		VI.pixel_type = VideoInfo::CS_I420;
 		this->UsingHighBitdepthHack = true;
+    }
+	else if (F->ConvertedPixelFormat == FFMS_GetPixFmt("yuv422p10le")) {
+		VI.pixel_type = VideoInfo::CS_YV16;
+		this->UsingHighBitdepthHack = true;
+    }
+	else if (F->ConvertedPixelFormat == FFMS_GetPixFmt("yuv444p10le")) {
+		VI.pixel_type = VideoInfo::CS_YV24;
+		this->UsingHighBitdepthHack = true;
 	}
 	else
 		Env->ThrowError("FFVideoSource: No suitable output format found");
@@ -280,7 +292,7 @@ void AvisynthVideoSource::InitOutputFormat(
 		VI.width -= VI.width & 1;
 	}
 
-	if (VI.pixel_type == VideoInfo::CS_YUY2) {
+	if (VI.pixel_type == VideoInfo::CS_YUY2 || VI.pixel_type == VideoInfo::CS_YV16) {
 		VI.width -= VI.width & 1;
 	}
 
@@ -290,7 +302,7 @@ void AvisynthVideoSource::InitOutputFormat(
 }
 
 void AvisynthVideoSource::OutputFrame(const FFMS_Frame *Frame, PVideoFrame &Dst, IScriptEnvironment *Env) {
-	if (VI.pixel_type == VideoInfo::CS_I420 && this->UsingHighBitdepthHack) {
+	if (VI.IsPlanar() && this->UsingHighBitdepthHack) {
 		// Credits: TheFluff & cretindesalpes
 		// ugly code for an ugly hack!
 		for (int p = 0; p < 3; p++) {
