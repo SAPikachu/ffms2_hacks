@@ -32,6 +32,11 @@ extern "C" {
 #endif
 
 
+#ifdef FFMBC
+
+#define av_opt_set_int(obj, name, val, _) av_set_int(obj, name, val)
+
+#endif
 
 // hack
 extern int CPUFeatures;

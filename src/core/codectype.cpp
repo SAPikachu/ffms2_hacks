@@ -317,12 +317,12 @@ static const AVCodecTag codec_bmp_tags[] = {
 	{ CODEC_ID_QPEG,         MKTAG('Q', '1', '.', '0') },
 	{ CODEC_ID_QPEG,         MKTAG('Q', '1', '.', '1') },
 	{ CODEC_ID_WMV3,         MKTAG('W', 'M', 'V', '3') },
-#if (LIBAVCODEC_VERSION_INT) >= (AV_VERSION_INT(53, 9, 0))
+#if (LIBAVCODEC_VERSION_INT) >= (AV_VERSION_INT(53, 9, 0)) && !defined(FFMBC)
 	{ CODEC_ID_WMV3IMAGE,    MKTAG('W', 'M', 'V', 'P') },
 #endif
 	{ CODEC_ID_VC1,          MKTAG('W', 'V', 'C', '1') },
 	{ CODEC_ID_VC1,          MKTAG('W', 'M', 'V', 'A') },
-#if (LIBAVCODEC_VERSION_INT) >= (AV_VERSION_INT(53, 9, 0))
+#if (LIBAVCODEC_VERSION_INT) >= (AV_VERSION_INT(53, 9, 0)) && !defined(FFMBC)
 	{ CODEC_ID_VC1IMAGE,     MKTAG('W', 'V', 'P', '2') },
 #endif
 	{ CODEC_ID_LOCO,         MKTAG('L', 'O', 'C', 'O') },
