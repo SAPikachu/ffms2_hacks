@@ -92,7 +92,7 @@ PVideoFrame SWScale::GetFrame(int n, IScriptEnvironment *Env) {
 	int SrcStride[3] = {Src->GetPitch(PLANAR_Y), Src->GetPitch(PLANAR_U), Src->GetPitch(PLANAR_V)};
 
 	if (FlipOutput) {
-		uint8_t *DstData[3] = {Dst->GetWritePtr(PLANAR_Y) + Dst->GetPitch(PLANAR_Y) * (Dst->GetHeight(PLANAR_Y) - 1), Dst->GetWritePtr(PLANAR_U) + Dst->GetPitch(PLANAR_U) * (Dst->GetHeight(PLANAR_U) - 1), Dst->GetWritePtr(PLANAR_V) + Dst->GetPitch(PLANAR_V) * (Dst->GetHeight(PLANAR_V) - 1)};
+		uint8_t *DstData[3] = {Dst->GetWritePtr(PLANAR_Y) + Dst->GetPitch(PLANAR_Y) * ((vi.height >> vi.GetPlaneHeightSubsampling(PLANAR_Y)) - 1), Dst->GetWritePtr(PLANAR_U) + Dst->GetPitch(PLANAR_U) * ((vi.height >> vi.GetPlaneHeightSubsampling(PLANAR_U)) - 1), Dst->GetWritePtr(PLANAR_V) + Dst->GetPitch(PLANAR_V) * ((vi.height >> vi.GetPlaneHeightSubsampling(PLANAR_V)) - 1)};
 		int DstStride[3] = {-Dst->GetPitch(PLANAR_Y), -Dst->GetPitch(PLANAR_U), -Dst->GetPitch(PLANAR_V)};
 		sws_scale(Context, SrcData, SrcStride, 0, OrigHeight, DstData, DstStride);
 	} else {
