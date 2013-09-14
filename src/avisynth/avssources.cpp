@@ -32,8 +32,10 @@ AvisynthVideoSource::AvisynthVideoSource(const char *SourceFile, int Track, FFMS
 , FPSDen(FPSDen)
 , RFFMode(RFFMode)
 , VarPrefix(VarPrefix)
+, UsingHighBitdepthHack(false)
 {
 	memset(&VI, 0, sizeof(VI));
+
 
 	ErrorInfo E;
 	V = FFMS_CreateVideoSource(SourceFile, Track, Index, Threads, SeekMode, &E);
@@ -228,6 +230,10 @@ void AvisynthVideoSource::InitOutputFormat(
 		VI.pixel_type = VideoInfo::CS_BGR32;
 	else if (F->ConvertedPixelFormat == FFMS_GetPixFmt("bgr24"))
 		VI.pixel_type = VideoInfo::CS_BGR24;
+	else if (F->ConvertedPixelFormat == FFMS_GetPixFmt("yuv420p10le")) {
+		VI.pixel_type = VideoInfo::CS_I420;
+		this->UsingHighBitdepthHack = true;
+	}
 	else
 		Env->ThrowError("FFVideoSource: No suitable output format found");
 
@@ -248,6 +254,8 @@ void AvisynthVideoSource::InitOutputFormat(
 
 	VI.width = F->ScaledWidth;
 	VI.height = F->ScaledHeight;
+	if (this->UsingHighBitdepthHack)
+		VI.height *= 2;
 
 	// Crop to obey avisynth's even width/height requirements
 	if (VI.pixel_type == VideoInfo::CS_I420) {
@@ -271,8 +279,41 @@ static void BlitPlane(const FFMS_Frame *Frame, PVideoFrame &Dst, IScriptEnvironm
 		Dst->GetRowSize(PlaneId), Dst->GetHeight(PlaneId));
 }
 
+static void BlitPlaneHigh(const FFMS_Frame *Frame, PVideoFrame &Dst, IScriptEnvironment *Env, int p) {
+	int plane;
+	switch (p) {
+		case 0: plane = PLANAR_Y; break;
+		case 1: plane = PLANAR_U; break;
+		case 2: plane = PLANAR_V; break;
+	}
+	uint8_t *DstP = Dst->GetWritePtr(plane);
+	int DstPitch = Dst->GetPitch(plane);
+	// we need to iterate over the source buffer twice; once to get the MSB and once to get the LSB.
+	for (int i = 1; i >= 0; i--) {
+		uint16_t *SrcP = (uint16_t*)Frame->Data[p];
+		int height = (p == 0) ? Frame->ScaledHeight : Frame->ScaledHeight / 2; // remember UV planes are half height
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < (Frame->Linesize[p] / 2); x++) { // assume 2 bytes per pixel
+				// wouldn't it have been nice if we could just use Env->BitBlt()...?
+				if (x >= DstPitch) {
+					*SrcP++; // advance the source pointer until we hit the next line
+					continue;
+				}
+				// I sure hope a shift by 0 gets optimized away by the compiler...
+				*DstP++ = (uint8_t)(*SrcP++ >> (2*i)); // yuv420p10le uses the 10 least significant bits. shift right by 2 to get the 8 most significant ones.
+			}
+		}
+	}
+}
+
 void AvisynthVideoSource::OutputFrame(const FFMS_Frame *Frame, PVideoFrame &Dst, IScriptEnvironment *Env) {
-	if (VI.pixel_type == VideoInfo::CS_I420) {
+	if (VI.pixel_type == VideoInfo::CS_I420 && this->UsingHighBitdepthHack) {
+		BlitPlaneHigh(Frame, Dst, Env, 0);
+		BlitPlaneHigh(Frame, Dst, Env, 1);
+		BlitPlaneHigh(Frame, Dst, Env, 2);
+
+	}
+	else if (VI.pixel_type == VideoInfo::CS_I420) {
 		BlitPlane(Frame, Dst, Env, 0);
 		BlitPlane(Frame, Dst, Env, 1);
 		BlitPlane(Frame, Dst, Env, 2);
