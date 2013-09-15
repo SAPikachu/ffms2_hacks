@@ -21,6 +21,29 @@
 #ifndef FFMSCOMPAT_H
 #define	FFMSCOMPAT_H
 
+
+#ifdef FFMBC
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <libavutil/pixdesc.h>
+#ifdef __cplusplus
+}
+#endif
+
+#define AVPixelFormat PixelFormat
+#define AV_PIX_FMT_NB PIX_FMT_NB
+
+#define av_opt_set_int(obj, name, val, _) av_set_int(obj, name, val)
+#define av_opt_set_double(obj, name, val, _) av_set_double(obj, name, val)
+#define av_opt_get_int(obj, name, _, out_val) (*(out_val) = av_get_int(obj, name, NULL))
+#define av_opt_get_double(obj, name, _, out_val) (*(out_val) = av_get_double(obj, name, NULL))
+
+#define AV_SAMPLE_FMT_U8P (AV_SAMPLE_FMT_DBL + 1)
+
+#endif
+
 // Defaults to libav compatibility, uncomment (when building with msvc) to force ffmpeg compatibility.
 //#define FFMS_USE_FFMPEG_COMPAT
 
@@ -65,7 +88,7 @@
 #       undef CodecID
 #   endif
 #   if VERSION_CHECK(LIBAVCODEC_VERSION_INT, <, 54, 28, 0, 54, 59, 100)
-static void av_frame_free(AVFrame **frame) { av_freep(frame); }
+static void avcodec_free_frame(AVFrame **frame) { av_freep(frame); }
 #       define av_frame_unref avcodec_get_frame_defaults
 #   elif VERSION_CHECK(LIBAVCODEC_VERSION_INT, <, 55, 28, 1, 55, 45, 101)
 #       define av_frame_free avcodec_free_frame

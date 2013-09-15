@@ -368,11 +368,13 @@ static const AVCodecTag codec_bmp_tags[] = {
 	{ CODEC_ID_G2M,          MKTAG('G', '2', 'M', '4') },
 #endif
 	{ CODEC_ID_AMV,          MKTAG('A', 'M', 'V', 'F') },
+#ifndef FFMBC
 	{ CODEC_ID_UTVIDEO,      MKTAG('U', 'L', 'R', 'A') },
 	{ CODEC_ID_UTVIDEO,      MKTAG('U', 'L', 'R', 'G') },
 	{ CODEC_ID_UTVIDEO,      MKTAG('U', 'L', 'Y', '0') },
 	{ CODEC_ID_UTVIDEO,      MKTAG('U', 'L', 'Y', '2') },
 	{ CODEC_ID_VBLE,         MKTAG('V', 'B', 'L', 'E') },
+#endif
 #if defined(FFMS_USE_FFMPEG_COMPAT) && (LIBAVCODEC_VERSION_INT) >= (AV_VERSION_INT(53, 43, 0))
 	{ CODEC_ID_ESCAPE130,    MKTAG('E', '1', '3', '0') },
 #endif

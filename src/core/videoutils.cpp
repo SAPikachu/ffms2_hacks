@@ -29,12 +29,6 @@ extern "C" {
 #include <libavutil/opt.h>
 }
 
-#ifdef FFMBC
-
-#define av_opt_set_int(obj, name, val, _) av_set_int(obj, name, val)
-
-#endif
-
 SwsContext *GetSwsContext(int SrcW, int SrcH, PixelFormat SrcFormat, int SrcColorSpace, int SrcColorRange, int DstW, int DstH, PixelFormat DstFormat, int DstColorSpace, int DstColorRange, int64_t Flags) {
 	Flags |= SWS_FULL_CHR_H_INT | SWS_FULL_CHR_H_INP | SWS_ACCURATE_RND | SWS_BITEXACT;
 	SwsContext *Context = sws_alloc_context();
