@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Configuration">
+    <PlatformToolset>v110_xp</PlatformToolset>
+    <TargetName>ffms2</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <AdditionalDependencies>libbz2.a;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\avisynth\avisynth_videoinfo_26.cpp" />
+    <ClCompile Include="..\src\core\ffmscompat.cpp" />
+  </ItemGroup>
+  <Import Project="ffms2.vcxproj"/>
+  <PropertyGroup Condition="'$(Variant)'=='ffmbc'">
+    <WithAvResample>false</WithAvResample>
+    <ForkName>ffmpeg</ForkName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Variant)'=='ffmbc'">
+    <ClCompile>
+      <PreprocessorDefinitions>FFMBC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+</Project>
