@@ -6,7 +6,8 @@ set INSTALL_PREFIX=local-install
 set Z7="D:\7-Zip\7z.exe"
 
 pushd ..
-for /f "usebackq" %%l in (`%MINGW_ROOT%\bin\git rev-parse --short HEAD`) do set FFMS_REV=%%l
+for /f "usebackq" %%l in (`%MINGW_ROOT%\bin\git merge-base upstream/master HEAD`) do set FFMS_REV=%%l
+for /f "usebackq" %%l in (`%MINGW_ROOT%\bin\git rev-parse --short %FFMS_REV%`) do set FFMS_REV=%%l
 popd
 
 if "x%FFMS_REV%" == "x" set FFMS_REV=unknown
