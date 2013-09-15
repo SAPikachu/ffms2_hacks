@@ -224,8 +224,10 @@ void FFMS_VideoSource::DetectInputFormat() {
 	if (InputColorRange == AVCOL_RANGE_UNSPECIFIED)
 		InputColorRange = AVCOL_RANGE_MPEG;
 
+#ifndef FFMBC
 	if (InputColorSpace == AVCOL_SPC_UNSPECIFIED)
 		InputColorSpace = CodecContext->colorspace;
+#endif
 	if (InputColorSpace == AVCOL_SPC_UNSPECIFIED)
 		InputColorSpace = GetAssumedColorSpace(CodecContext->width, CodecContext->height);
 }
@@ -251,7 +253,11 @@ void FFMS_VideoSource::ReAdjustOutputFormat() {
 	if (OutputColorRange == AVCOL_RANGE_UNSPECIFIED)
 		OutputColorRange = InputColorRange;
 
+#ifndef FFMBC
 	OutputColorSpace = CodecContext->colorspace;
+#else
+	OutputColorSpace = AVCOL_SPC_UNSPECIFIED;
+#endif
 	if (OutputColorSpace == AVCOL_SPC_UNSPECIFIED)
 		OutputColorSpace = InputColorSpace;
 
@@ -315,7 +321,11 @@ void FFMS_VideoSource::SetVideoProperties() {
 	}
 	VP.NumFrames = Frames.VisibleFrameCount();
 	VP.TopFieldFirst = DecodeFrame->top_field_first;
+#ifndef FFMBC
 	VP.ColorSpace = CodecContext->colorspace;
+#else
+	VP.ColorSpace = AVCOL_SPC_UNSPECIFIED;
+#endif
 	VP.ColorRange = CodecContext->color_range;
 	// these pixfmt's are deprecated but still used
 	if (CodecContext->pix_fmt == PIX_FMT_YUVJ420P ||

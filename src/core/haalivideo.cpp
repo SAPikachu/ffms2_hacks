@@ -78,8 +78,12 @@ FFHaaliVideo::FFHaaliVideo(const char *SourceFile, int Track, FFMS_Index &Index,
 	CodecContext->thread_count = DecodingThreads;
 
 	if (CodecContext->codec->id == FFMS_ID(H264) && SourceMode == FFMS_SOURCE_HAALIMPEG)
-		BitStreamFilter = av_bitstream_filter_init("h264_mp4toannexb");
-
+		BitStreamFilter = av_bitstream_filter_init("h264_mp4toannexb"
+#ifdef FFMBC
+													, NULL
+#endif
+		);
+	
 	Res.CloseCodec(true);
 
 	// Always try to decode a frame to make sure all required parameters are known

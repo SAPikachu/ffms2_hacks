@@ -119,7 +119,11 @@ FFMS_Index *FFHaaliIndexer::DoIndexing() {
 			VideoContexts[i].Parser->flags = PARSER_FLAG_COMPLETE_FRAMES;
 
 			if (CodecContext->codec->id == FFMS_ID(H264) && SourceMode == FFMS_SOURCE_HAALIMPEG)
-				VideoContexts[i].BitStreamFilter = av_bitstream_filter_init("h264_mp4toannexb");
+				VideoContexts[i].BitStreamFilter = av_bitstream_filter_init("h264_mp4toannexb"
+#ifdef FFMBC
+																			, NULL
+#endif
+				);
 		}
 		else {
 			AudioContexts[i].CodecContext = CodecContext;
