@@ -233,7 +233,11 @@ void FlushBuffers(AVCodecContext *CodecContext) {
 		// If the codec doesn't have flush(), it might not need it... or it
 		// might need it and just not implement it as in the case of VC-1, so
 		// close and reopen the codec
+#ifdef FFMBC
+		AVCodec *codec = CodecContext->codec;
+#else
 		const AVCodec *codec = CodecContext->codec;
+#endif
 		avcodec_close(CodecContext);
 		// Whether or not codec is const varies between versions
 		if (avcodec_open2(CodecContext, const_cast<AVCodec *>(codec), 0) < 0)

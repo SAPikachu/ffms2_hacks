@@ -69,7 +69,11 @@ FFHaaliVideo::FFHaaliVideo(const char *SourceFile, int Track, FFMS_Index &Index,
 	CodecContext = HCodecContext;
 	CodecContext->has_b_frames = Frames.MaxBFrames;
 
+#ifdef FFMBC
+	AVCodec *Codec = NULL;
+#else
 	const AVCodec *Codec = NULL;
+#endif
 	std::swap(Codec, CodecContext->codec);
 	if (avcodec_open2(CodecContext, Codec, NULL) < 0)
 		throw FFMS_Exception(FFMS_ERROR_DECODING, FFMS_ERROR_CODEC,
