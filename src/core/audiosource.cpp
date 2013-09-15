@@ -66,6 +66,10 @@ FFMS_AudioSource::FFMS_AudioSource(const char *SourceFile, FFMS_Index &Index, in
 , TrackNumber(Track)
 , SeekOffset(0)
 {
+#ifdef FFMBC
+	throw FFMS_Exception(FFMS_ERROR_DECODING, FFMS_ERROR_UNSUPPORTED,
+		"Audio is unsupported in ffmbc build");
+#endif
 	if (Track < 0 || Track >= static_cast<int>(Index.size()))
 		throw FFMS_Exception(FFMS_ERROR_INDEX, FFMS_ERROR_INVALID_ARGUMENT,
 			"Out of bounds track index selected");
@@ -88,6 +92,7 @@ FFMS_AudioSource::FFMS_AudioSource(const char *SourceFile, FFMS_Index &Index, in
 #define EXCESSIVE_CACHE_SIZE 400
 
 void FFMS_AudioSource::Init(const FFMS_Index &Index, int DelayMode) {
+#ifndef FFMBC
 	// Decode the first packet to ensure all properties are initialized
 	// Don't cache it since it might be in the wrong format
 	while (DecodeFrame->nb_samples == 0)
@@ -141,6 +146,7 @@ void FFMS_AudioSource::Init(const FFMS_Index &Index, int DelayMode) {
 	}
 
 	AP.NumSamples += Delay;
+#endif
 }
 
 void FFMS_AudioSource::CacheBeginning() {
@@ -239,6 +245,7 @@ FFMS_ResampleOptions *FFMS_AudioSource::CreateResampleOptions() const {
 }
 
 void FFMS_AudioSource::ResampleAndCache(CacheIterator pos) {
+#ifndef FFMBC
 	AudioBlock& block = *pos;
 	size_t old_size = block.Data.size();
 	size_t new_req = DecodeFrame->nb_samples * BytesPerSample;
@@ -260,10 +267,11 @@ void FFMS_AudioSource::ResampleAndCache(CacheIterator pos) {
 			block.Data.insert(block.Data.end(), &Data[c][s * width], &Data[c][(s + 1) * width]);
 	}
 #endif
+#endif // FFMBC
 }
 
 void FFMS_AudioSource::CacheBlock(CacheIterator &pos) {
-	// If the previous block has the same Start sample as this one, then
+#ifndef FFMBC
 	// we got multiple frames of audio out of a single package and should
 	// combine them
 	CacheIterator block = pos;
@@ -290,9 +298,11 @@ void FFMS_AudioSource::CacheBlock(CacheIterator &pos) {
 		if (min == pos) ++pos;
 		Cache.erase(min);
 	}
+#endif
 }
 
 void FFMS_AudioSource::DecodeNextBlock(CacheIterator *pos) {
+#ifndef FFMBC
 	CurrentFrame = &Frames[PacketNumber];
 
 	AVPacket Packet;
@@ -331,6 +341,7 @@ void FFMS_AudioSource::DecodeNextBlock(CacheIterator *pos) {
 	// Zero sample packets aren't included in the index
 	if (GotSamples)
 		++PacketNumber;
+#endif
 }
 
 static bool SampleStartComp(const FrameInfo &a, const FrameInfo &b) {
@@ -338,6 +349,7 @@ static bool SampleStartComp(const FrameInfo &a, const FrameInfo &b) {
 }
 
 void FFMS_AudioSource::GetAudio(void *Buf, int64_t Start, int64_t Count) {
+#ifndef FFMBC
 	if (Start < 0 || Start + Count > AP.NumSamples || Count < 0)
 		throw FFMS_Exception(FFMS_ERROR_DECODING, FFMS_ERROR_INVALID_ARGUMENT,
 			"Out of bounds audio samples requested");
@@ -417,6 +429,7 @@ void FFMS_AudioSource::GetAudio(void *Buf, int64_t Start, int64_t Count) {
 			--it;
 		}
 	}
+#endif
 }
 
 size_t GetSeekablePacketNumber(FFMS_Track const& Frames, size_t PacketNumber) {

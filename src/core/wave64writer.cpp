@@ -107,6 +107,7 @@ void Wave64Writer::WriteHeader(bool Initial, bool IsFloat) {
 }
 
 void Wave64Writer::WriteData(AVFrame const& Frame) {
+#ifndef FFMBC
 	size_t Length = (size_t)Frame.nb_samples * BytesPerSample * Channels;
 	if (Channels > 1 && av_sample_fmt_is_planar(static_cast<AVSampleFormat>(Frame.format))) {
 		for (int32_t sample = 0; sample < Frame.nb_samples; ++sample) {
@@ -118,4 +119,5 @@ void Wave64Writer::WriteData(AVFrame const& Frame) {
 		WavFile.Write(reinterpret_cast<char *>(Frame.extended_data[0]), Length);
 	}
 	BytesWritten += Length;
+#endif
 }

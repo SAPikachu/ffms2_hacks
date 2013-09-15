@@ -321,6 +321,9 @@ FFMS_Indexer::FFMS_Indexer(const char *Filename)
 }
 
 void FFMS_Indexer::WriteAudio(SharedAudioContext &AudioContext, FFMS_Index *Index, int Track) {
+#ifdef FFMBC
+	return;
+#else
 	// Delay writer creation until after an audio frame has been decoded. This ensures that all parameters are known when writing the headers.
 	if (!DecodeFrame->nb_samples) return;
 
@@ -352,9 +355,22 @@ void FFMS_Indexer::WriteAudio(SharedAudioContext &AudioContext, FFMS_Index *Inde
 	}
 
 	AudioContext.W64Writer->WriteData(*DecodeFrame);
+#endif
 }
 
 uint32_t FFMS_Indexer::IndexAudioPacket(int Track, AVPacket *Packet, SharedAudioContext &Context, FFMS_Index &TrackIndices) {
+#ifdef FFMBC
+	if (ErrorHandling == FFMS_IEH_ABORT) {
+		throw FFMS_Exception(FFMS_ERROR_DECODING, FFMS_ERROR_UNSUPPORTED,
+			"Audio is unsupported in ffmbc build");
+	} else if (ErrorHandling == FFMS_IEH_CLEAR_TRACK) {
+		TrackIndices[Track].clear();
+		IndexMask &= ~(1 << Track);
+	} else if (ErrorHandling == FFMS_IEH_STOP_TRACK) {
+		IndexMask &= ~(1 << Track);
+	}
+	return 0;
+#else
 	AVCodecContext *CodecContext = Context.CodecContext;
 	int64_t StartSample = Context.CurrentSample;
 	int Read = 0;
@@ -390,6 +406,7 @@ uint32_t FFMS_Indexer::IndexAudioPacket(int Track, AVPacket *Packet, SharedAudio
 	Packet->size += Read;
 	Packet->data -= Read;
 	return static_cast<uint32_t>(Context.CurrentSample - StartSample);
+#endif
 }
 
 void FFMS_Indexer::CheckAudioProperties(int Track, AVCodecContext *Context) {

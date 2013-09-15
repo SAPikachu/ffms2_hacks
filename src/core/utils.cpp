@@ -123,7 +123,9 @@ static int64_t av_get_default_channel_layout(int nb_channels) {
 		case 4: return AV_CH_LAYOUT_QUAD;
 		case 5: return AV_CH_LAYOUT_5POINT0;
 		case 6: return AV_CH_LAYOUT_5POINT1;
+#ifndef FFMBC
 		case 7: return AV_CH_LAYOUT_6POINT1;
+#endif
 		case 8: return AV_CH_LAYOUT_7POINT1;
 		default: return 0;
 	}
