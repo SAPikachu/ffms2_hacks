@@ -21,7 +21,6 @@
 #include "ffms.h"
 
 extern "C" {
-#include "stdiostream.h"
 #include <libavutil/mem.h>
 #include <libavutil/opt.h>
 #include <libavformat/avformat.h>

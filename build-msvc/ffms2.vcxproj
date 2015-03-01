@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -57,6 +57,7 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules />
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>FFMS_EXPORTS;HAALISOURCE;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_SCL_SECURE_NO_WARNINGS;__STDC_CONSTANT_MACROS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -98,6 +99,7 @@
   <ItemDefinitionGroup Condition="'$(Platform)'=='Win32'">
     <Link>
       <TargetMachine>MachineX86</TargetMachine>
+      <ImageHasSafeExceptionHandlers Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Platform)'=='x64'">
@@ -110,6 +112,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\avisynth\avisynth.cpp" />
+    <ClCompile Include="..\src\avisynth\avisynth_videoinfo_26.cpp" />
     <ClCompile Include="..\src\avisynth\avssources.cpp" />
     <ClCompile Include="..\src\avisynth\avsutils.cpp" />
     <ClCompile Include="..\src\avisynth\ffswscale.cpp" />
@@ -117,6 +120,7 @@
     <ClCompile Include="..\src\core\audiosource.cpp" />
     <ClCompile Include="..\src\core\codectype.cpp" />
     <ClCompile Include="..\src\core\ffms.cpp" />
+    <ClCompile Include="..\src\core\ffmscompat.cpp" />
     <ClCompile Include="..\src\core\filehandle.cpp" />
     <ClCompile Include="..\src\core\haaliaudio.cpp" />
     <ClCompile Include="..\src\core\haalicommon.cpp" />

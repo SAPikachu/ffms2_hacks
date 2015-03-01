@@ -28,6 +28,8 @@
  * $Id: MatroskaParser.c,v 1.75 2010/08/14 08:38:41 mike Exp $
  *
  */
+#define _UNISTD_H
+#define __UNISTD_H_SOURCED__ 1
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

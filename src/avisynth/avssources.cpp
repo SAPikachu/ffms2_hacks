@@ -27,7 +27,7 @@
 AvisynthVideoSource::AvisynthVideoSource(const char *SourceFile, int Track, FFMS_Index *Index,
 		int FPSNum, int FPSDen, int Threads, int SeekMode, int RFFMode,
 		int ResizeToWidth, int ResizeToHeight, const char *ResizerName,
-		const char *ConvertToFormatName, const char *VarPrefix, bool Enable10bitHack, IScriptEnvironment* Env) {
+		const char *ConvertToFormatName, const char *VarPrefix, bool Enable10bitHack, IScriptEnvironment* Env) 
 : FPSNum(FPSNum)
 , FPSDen(FPSDen)
 , RFFMode(RFFMode)
@@ -289,14 +289,15 @@ void AvisynthVideoSource::InitOutputFormat(
 	}
 }
 
-static void BlitPlane(const FFMS_Frame *Frame, PVideoFrame &Dst, IScriptEnvironment *Env, int Plane) {
+static void BlitPlane(const FFMS_Frame *Frame, PVideoFrame &Dst, IScriptEnvironment *Env, int Plane, VideoInfo& VI) {
 	int PlaneId = 1 << Plane;
+	int height = Frame->ScaledHeight >> VI.GetPlaneHeightSubsampling(PlaneId);
 	Env->BitBlt(Dst->GetWritePtr(PlaneId), Dst->GetPitch(PlaneId),
 		Frame->Data[Plane], Frame->Linesize[Plane],
-		Dst->GetRowSize(PlaneId), Dst->GetHeight(PlaneId));
+		VI.RowSize(PlaneId), height);
 }
 
-static void BlitPlaneHigh(const FFMS_Frame *Frame, PVideoFrame &Dst, IScriptEnvironment *Env, int p) {
+static void BlitPlaneHigh(const FFMS_Frame *Frame, PVideoFrame &Dst, IScriptEnvironment *Env, int p, VideoInfo& VI) {
 	// Credits: TheFluff & cretindesalpes
 	int plane;
 	switch (p) {
@@ -326,47 +327,50 @@ static void BlitPlaneHigh(const FFMS_Frame *Frame, PVideoFrame &Dst, IScriptEnvi
 
 void AvisynthVideoSource::OutputFrame(const FFMS_Frame *Frame, PVideoFrame &Dst, IScriptEnvironment *Env) {
 	if (VI.IsPlanar() && this->UsingHighBitdepthHack) {
-		BlitPlaneHigh(Frame, Dst, Env, 0);
-		BlitPlaneHigh(Frame, Dst, Env, 1);
-		BlitPlaneHigh(Frame, Dst, Env, 2);
+		BlitPlaneHigh(Frame, Dst, Env, 0, VI);
+		BlitPlaneHigh(Frame, Dst, Env, 1, VI);
+		BlitPlaneHigh(Frame, Dst, Env, 2, VI);
 
 	}
 	else if (VI.pixel_type == VideoInfo::CS_I420) {
-		BlitPlane(Frame, Dst, Env, 0);
-		BlitPlane(Frame, Dst, Env, 1);
-		BlitPlane(Frame, Dst, Env, 2);
+		BlitPlane(Frame, Dst, Env, 0, VI);
+		BlitPlane(Frame, Dst, Env, 1, VI);
+		BlitPlane(Frame, Dst, Env, 2, VI);
 	} else if (VI.IsYUY2()) {
-		BlitPlane(Frame, Dst, Env, 0);
+		BlitPlane(Frame, Dst, Env, 0, VI);
 	} else { // RGB
+        int height = Frame->ScaledHeight;
 		Env->BitBlt(
-			Dst->GetWritePtr() + Dst->GetPitch() * (Dst->GetHeight() - 1), -Dst->GetPitch(),
+			Dst->GetWritePtr() + Dst->GetPitch() * (height - 1), -Dst->GetPitch(),
 			Frame->Data[0], Frame->Linesize[0],
-			Dst->GetRowSize(), Dst->GetHeight());
+			VI.RowSize(), height);
 	}
 }
 
-static void BlitField(const FFMS_Frame *Frame, PVideoFrame &Dst, IScriptEnvironment *Env, int Plane, int Field) {
+static void BlitField(const FFMS_Frame *Frame, PVideoFrame &Dst, IScriptEnvironment *Env, int Plane, int Field, VideoInfo& VI) {
 	int PlaneId = 1 << Plane;
+	int height = Frame->ScaledHeight >> VI.GetPlaneHeightSubsampling(PlaneId);
 	Env->BitBlt(
 		Dst->GetWritePtr(PlaneId) + Dst->GetPitch(PlaneId) * Field, Dst->GetPitch(PlaneId) * 2,
 		Frame->Data[Plane] + Frame->Linesize[Plane] * Field, Frame->Linesize[Plane] * 2,
-		Dst->GetRowSize(PlaneId), Dst->GetHeight(PlaneId) / 2);
+		VI.RowSize(PlaneId), height / 2);
 }
 
 void AvisynthVideoSource::OutputField(const FFMS_Frame *Frame, PVideoFrame &Dst, int Field, IScriptEnvironment *Env) {
 	const FFMS_Frame *SrcPicture = (Frame);
 
 	if (VI.pixel_type == VideoInfo::CS_I420) {
-		BlitField(Frame, Dst, Env, 0, Field);
-		BlitField(Frame, Dst, Env, 1, Field);
-		BlitField(Frame, Dst, Env, 2, Field);
+		BlitField(Frame, Dst, Env, 0, Field, VI);
+		BlitField(Frame, Dst, Env, 1, Field, VI);
+		BlitField(Frame, Dst, Env, 2, Field, VI);
 	} else if (VI.IsYUY2()) {
-		BlitField(Frame, Dst, Env, 0, Field);
+		BlitField(Frame, Dst, Env, 0, Field, VI);
 	} else { // RGB
+        int height = Frame->ScaledHeight;
         Env->BitBlt(
-			Dst->GetWritePtr() + Dst->GetPitch() * (Dst->GetHeight() - 1 - Field), -Dst->GetPitch() * 2,
+			Dst->GetWritePtr() + Dst->GetPitch() * (height - 1 - Field), -Dst->GetPitch() * 2,
 			SrcPicture->Data[0] + SrcPicture->Linesize[0] * Field, SrcPicture->Linesize[0] * 2,
-			Dst->GetRowSize(), Dst->GetHeight() / 2);
+			VI.RowSize(), height / 2);
 	}
 }
 
