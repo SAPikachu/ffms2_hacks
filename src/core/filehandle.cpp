@@ -36,7 +36,11 @@ static AVIOContext *ffms_fopen(const char *filename, const char *mode) {
 	if (smode.find('w') != std::string::npos)
 		flags |= AVIO_FLAG_WRITE;
 
+#ifdef FFMBC
+	ret = avio_open(&ctx, filename, flags);
+#else
 	ret = avio_open2(&ctx, filename, flags, NULL, NULL);
+#endif
 	if (ret < 0)
 		return NULL;
 

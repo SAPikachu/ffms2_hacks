@@ -39,19 +39,26 @@ set OUTPUT=output\%BUILD_NAME%
 mkdir %OUTPUT%
 
 rd /s /q Win32
+rd /s /q bin
+rd /s /q obj
 rd /s /q ffmsindex_local
 rd /s /q %CONFIGURATION%
 
-msbuild ffms2_local.vcxproj /t:clean /p:configuration=%CONFIGURATION% /p:platform=Win32 /p:BuiltWithGCC=true /p:WithPthread=false /p:ForkName=%FORK_NAME% /p:Variant=%VARIANT% /p:"IncludePath=%MINGW_ROOT%\%LIBAV_PATH%\%INSTALL_PREFIX%\include;%INCLUDE%;%MINGW_ROOT%\include" /p:"LibraryPath=%LIB%;%MINGW_ROOT%\%LIBAV_PATH%\%INSTALL_PREFIX%\lib;%MINGW_ROOT%\lib"
+set EXTRA_PARAM=
 
-msbuild ffmsindex_local.vcxproj /t:clean /p:configuration=%CONFIGURATION% /p:platform=Win32 /p:Variant=%VARIANT% /p:BuildProjectReferences=false /p:"IncludePath=%MINGW_ROOT%\%LIBAV_PATH%\%INSTALL_PREFIX%\include;%INCLUDE%;D:\Microsoft Visual Studio 10.0\Projects\msinttypes;%MINGW_ROOT%\include"
+if "%FORK_NAME%"=="ffmpeg" set "EXTRA_PARAM=/p:WithSwResample=true /p:WithIconv=true"
+if "%FORK_NAME%"=="ffmbc" set "EXTRA_PARAM=/p:WithSwResample=false /p:WithAvResample=false"
 
-msbuild ffms2_local.vcxproj /t:build /p:configuration=%CONFIGURATION% /p:platform=Win32 /p:BuiltWithGCC=true /p:WithPthread=false /p:ForkName=%FORK_NAME% /p:Variant=%VARIANT% /p:"IncludePath=%MINGW_ROOT%\%LIBAV_PATH%\%INSTALL_PREFIX%\include;%INCLUDE%;%MINGW_ROOT%\include" /p:"LibraryPath=%LIB%;%MINGW_ROOT%\%LIBAV_PATH%\%INSTALL_PREFIX%\lib;%MINGW_ROOT%\lib\gcc\mingw32\4.6.1;%MINGW_ROOT%\lib"
+msbuild ffms2_local.vcxproj /t:clean /p:configuration=%CONFIGURATION% /p:platform=Win32 /p:BuiltWithGCC=true /p:WithPthread=false /p:ForkName=%FORK_NAME% /p:Variant=%VARIANT% /p:"IncludePath=%MINGW_ROOT%\%LIBAV_PATH%\%INSTALL_PREFIX%\include;%INCLUDE%;%MINGW_ROOT%\include" /p:"LibraryPath=%LIB%;%MINGW_ROOT%\%LIBAV_PATH%\%INSTALL_PREFIX%\lib;%MINGW_ROOT%\lib" %EXTRA_PARAM%
 
-msbuild ffmsindex_local.vcxproj /t:build /p:configuration=%CONFIGURATION% /p:platform=Win32 /p:Variant=%VARIANT% /p:BuildProjectReferences=false /p:"IncludePath=%MINGW_ROOT%\%LIBAV_PATH%\%INSTALL_PREFIX%\include;%INCLUDE%;D:\Microsoft Visual Studio 10.0\Projects\msinttypes;%MINGW_ROOT%\include"
+msbuild ffmsindex_local.vcxproj /t:clean /p:configuration=%CONFIGURATION% /p:platform=Win32 /p:Variant=%VARIANT% /p:BuildProjectReferences=false /p:"IncludePath=%MINGW_ROOT%\%LIBAV_PATH%\%INSTALL_PREFIX%\include;%INCLUDE%;D:\Microsoft Visual Studio 10.0\Projects\msinttypes;%MINGW_ROOT%\include" %EXTRA_PARAM%
 
-copy Win32\Release\ffms2.dll %OUTPUT%
-copy Release\ffmsindex.exe %OUTPUT%
+msbuild ffms2_local.vcxproj /t:build /p:configuration=%CONFIGURATION% /p:platform=Win32 /p:BuiltWithGCC=true /p:WithPthread=false /p:ForkName=%FORK_NAME% /p:Variant=%VARIANT% /p:"IncludePath=%MINGW_ROOT%\%LIBAV_PATH%\%INSTALL_PREFIX%\include;%INCLUDE%;%MINGW_ROOT%\include" /p:"LibraryPath=%LIB%;%MINGW_ROOT%\%LIBAV_PATH%\%INSTALL_PREFIX%\lib;%MINGW_ROOT%\lib\gcc\mingw32\4.6.1;%MINGW_ROOT%\lib" %EXTRA_PARAM%
+
+msbuild ffmsindex_local.vcxproj /t:build /p:configuration=%CONFIGURATION% /p:platform=Win32 /p:Variant=%VARIANT% /p:BuildProjectReferences=false /p:"IncludePath=%MINGW_ROOT%\%LIBAV_PATH%\%INSTALL_PREFIX%\include;%INCLUDE%;D:\Microsoft Visual Studio 10.0\Projects\msinttypes;%MINGW_ROOT%\include" %EXTRA_PARAM%
+
+copy bin\Win32\Release\ffms2.dll %OUTPUT%
+copy bin\Win32\Release\ffmsindex.exe %OUTPUT%
 
 %Z7% a %OUTPUT%.7z .\%OUTPUT%\*
 

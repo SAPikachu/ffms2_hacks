@@ -21,6 +21,14 @@
     <ClCompile><PreprocessorDefinitions>WITH_AVRESAMPLE;%(PreprocessorDefinitions)</PreprocessorDefinitions></ClCompile>
   </ItemDefinitionGroup>
 
+  <ItemDefinitionGroup Condition="'$(WithSwResample)'=='true'">
+    <ClCompile><PreprocessorDefinitions>WITH_SWRESAMPLE;%(PreprocessorDefinitions)</PreprocessorDefinitions></ClCompile>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup Condition="'$(WithIconv)'=='true'">
+    <ClCompile><PreprocessorDefinitions>WITH_ICONV;%(PreprocessorDefinitions)</PreprocessorDefinitions></ClCompile>
+  </ItemDefinitionGroup>
+
   <ItemDefinitionGroup Condition="'$(ForkName)'=='libav'">
     <ClCompile><PreprocessorDefinitions>FFMS_USE_FFMPEG_COMPAT;%(PreprocessorDefinitions)</PreprocessorDefinitions></ClCompile>
   </ItemDefinitionGroup>

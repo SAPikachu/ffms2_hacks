@@ -89,6 +89,9 @@ extern "C" {
 #   endif
 #   if VERSION_CHECK(LIBAVCODEC_VERSION_INT, <, 54, 28, 0, 54, 59, 100)
 static void avcodec_free_frame(AVFrame **frame) { av_freep(frame); }
+#       ifdef FFMBC
+void av_frame_free(AVFrame **frame);
+#       endif
 #       define av_frame_unref avcodec_get_frame_defaults
 #   elif VERSION_CHECK(LIBAVCODEC_VERSION_INT, <, 55, 28, 1, 55, 45, 101)
 #       define av_frame_free avcodec_free_frame

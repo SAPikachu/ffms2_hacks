@@ -45,8 +45,16 @@ extern "C" {
 #pragma comment(lib, "libavcodec.a")
 #pragma comment(lib, "libavformat.a")
 #pragma comment(lib, "libswscale.a")
+#ifndef FFMBC
 #ifdef WITH_AVRESAMPLE
 #pragma comment(lib, "libavresample.a")
+#endif
+#ifdef WITH_SWRESAMPLE
+#pragma comment(lib, "libswresample.a")
+#endif
+#ifdef WITH_ICONV
+#pragma comment(lib, "libiconv.a")
+#endif
 #endif
 
 #ifdef WITH_OPENCORE_AMR_NB

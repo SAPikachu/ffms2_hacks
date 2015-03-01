@@ -80,7 +80,9 @@ void av_log_windebug_callback(void* ptr, int level, const char* fmt, va_list vl)
 FFMS_API(void) FFMS_Init(int, int UseUTF8Paths) {
 	if (!FFmpegInited) {
 		av_register_all();
+#ifndef FFMBC
 		avformat_network_init();
+#endif
 		RegisterCustomParsers();
 #ifdef _WIN32
 		GlobalUseUTF8Paths = !!UseUTF8Paths;
