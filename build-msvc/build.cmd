@@ -9,6 +9,7 @@ set CONFIGURATION=Release
 pushd ..
 for /f "usebackq" %%l in (`%MINGW_ROOT%\bin\git merge-base upstream/master HEAD`) do set FFMS_REV=%%l
 for /f "usebackq" %%l in (`%MINGW_ROOT%\bin\git rev-parse --short %FFMS_REV%`) do set FFMS_REV=%%l
+for /f "usebackq" %%l in (`%MINGW_ROOT%\bin\git rev-parse --short HEAD`) do set FFMS_REV=%FFMS_REV%+%%l
 popd
 
 if "x%FFMS_REV%" == "x" set FFMS_REV=unknown
@@ -57,8 +58,8 @@ msbuild ffms2_local.vcxproj /t:build /p:configuration=%CONFIGURATION% /p:platfor
 
 msbuild ffmsindex_local.vcxproj /t:build /p:configuration=%CONFIGURATION% /p:platform=Win32 /p:Variant=%VARIANT% /p:BuildProjectReferences=false /p:"IncludePath=%MINGW_ROOT%\%LIBAV_PATH%\%INSTALL_PREFIX%\include;%INCLUDE%;D:\Microsoft Visual Studio 10.0\Projects\msinttypes;%MINGW_ROOT%\include" %EXTRA_PARAM%
 
-copy bin\Win32\Release\ffms2.dll %OUTPUT%
-copy bin\Win32\Release\ffmsindex.exe %OUTPUT%
+copy bin\Win32\Release\ffms2.dll "%OUTPUT%"
+copy bin\Win32\Release\ffmsindex.exe "%OUTPUT%"
 
 %Z7% a %OUTPUT%.7z .\%OUTPUT%\*
 
