@@ -305,17 +305,18 @@ static void BlitPlaneHigh(const FFMS_Frame *Frame, PVideoFrame &Dst, IScriptEnvi
 		case 1: plane = PLANAR_U; break;
 		case 2: plane = PLANAR_V; break;
 	}
-	uint8_t *DstP = Dst->GetWritePtr(plane);
+	uint8_t *DstOrigin = Dst->GetWritePtr(plane);
 	int DstPitch = Dst->GetPitch(plane);
-	uint16_t *SrcP = (uint16_t*)Frame->Data[p];
+	uint16_t *SrcOrigin = (uint16_t*)Frame->Data[p];
 	int height = Frame->ScaledHeight >> VI.GetPlaneHeightSubsampling(plane);
 	const int lsb_offset = height * DstPitch;
 	for (int y = 0; y < height; y++) {
+        uint8_t *DstP = DstOrigin + DstPitch * y;
+        uint16_t *SrcP = SrcOrigin + (Frame->Linesize[p] / 2) * y;
 		for (int x = 0; x < (Frame->Linesize[p] / 2); x++) { // assume 2 bytes per pixel
 			// wouldn't it have been nice if we could just use Env->BitBlt()...?
 			if (x >= DstPitch) {
-				*SrcP++; // advance the source pointer until we hit the next line
-				continue;
+                break;
 			}
 			const int data10  = *SrcP++;
 			*DstP			 = (uint8_t)(data10 >> 2);
